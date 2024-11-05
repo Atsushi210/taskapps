@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <!-- BootstrapのCSSを読み込む -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 背景色 */
+        body {
+            background-color: #f4f7f9; /* 淡いグレー */
+        }
+    
+        /* ナビゲーションバーの色 */
+        .navbar {
+            background-color: #343a40; /* ダークグレー */
+        }
+    
+        .navbar-brand {
+            color: #ffffff; /* ナビゲーションバーのテキスト色 */
+            font-weight: bold;
+        }
+    
+        /* ボタンの色 */
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+    
+        .btn-danger {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+        }
+    
+        /* フォームのスタイル */
+        .form-control {
+            border-radius: 0.25rem;
+            border-color: #ced4da;
+        }
+    
+        /* リストアイテムのスタイル */
+        .list-group-item {
+            background-color: #ffffff;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+    
+        /* 優先度ラベルのスタイル */
+        .label-high {
+            background-color: #e74c3c; /* 高優先度は赤 */
+            color: white;
+            font-weight: bold;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .label-medium {
+            background-color: #f1c40f; /* 中優先度は黄色 */
+            color: white;
+            font-weight: bold;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .label-low {
+            background-color: #3498db; /* 低優先度は青 */
+            color: white;
+            font-weight: bold;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        /* タスク完了時のスタイル */
+        .task-complete {
+            text-decoration: line-through;
+            color: #6c757d; /* グレー */
+        }
+
+        /* 削除ボタンのレスポンシブ対応 */
+        @media (max-width: 768px) {
+            .btn-sm {
+                width: 100%;
+            }
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        .alert {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .alert.show {
+            opacity: 1;
+        }
+
+        .btn {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease-in-out;
+        }
+
+        .btn:hover {
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 期限が過ぎたタスク（赤色） */
+        .task-overdue {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        /* 今日が期限のタスク（黄色） */
+        .task-due-today {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        /* 期限が近いタスク（オレンジ色） */
+        .task-due-soon {
+            background-color: #ffe5b4;
+            color: #ff8c00;
+            border: 1px solid #ffcc80;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        /* 期限が設定されていない、または通常のタスク */
+        .task-normal {
+            background-color: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+</head>
+<body>
+
+<div class="container mt-4">
+    <!-- フラッシュメッセージの表示 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">To Do アプリ</a>
+    </div>
+</nav>
+
+
+<!-- タスク追加フォーム -->
+<div class="container mt-4">
+    <form action="/" method="POST" class="row g-3">
+        <div class="col-12 col-md-6">
+            <label for="task" class="form-label">タスク名</label>
+            <input type="text" name="task" class="form-control" placeholder="新しいタスクを入力">
+        </div>
+        <div class="col-12 col-md-3">
+            <label for="deadline" class="form-label">期限</label>
+            <input type="date" name="deadline" class="form-control">
+        </div>
+        <div class="col-12 col-md-2">
+            <label for="priority" class="form-label">優先度</label>
+            <select name="priority" class="form-select">
+                <option value="高">高</option>
+                <option value="中">中</option>
+                <option value="低">低</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-1">
+            <button type="submit" class="btn btn-primary w-100">追加</button>
+        </div>
+    </form>
+</div>
+
+
+<!-- タスクリストの表示 -->
+<div class="container mt-4">
+    <ul class="list-group">
+        {% for task in tasks %}
+            <li class="list-group-item {{ 
+                'task-overdue' if task.status == 'overdue' else 
+                'task-due-today' if task.status == 'due_today' else 
+                'task-due-soon' if task.status == 'due_soon' else 
+                'task-normal' }}">
+                <div class="row align-items-center">
+                    <!-- タスク完了チェックボックスとタスク名 -->
+                    <div class="col-12 col-md-4 d-flex align-items-center">
+                        <input type="checkbox" onchange="location.href='/complete/{{ task.id }}'" {% if task.complete %}checked{% endif %} class="me-2">
+                        <span class="{{ 'task-complete' if task.complete else '' }}">
+                            {{ task.name }}
+                        </span>
+                    </div>
+
+                    <!-- 優先度ラベル -->
+                    <div class="col-12 col-md-2 text-md-center mt-2 mt-md-0">
+                        {% if task.priority == '高' %}
+                            <span class="label-high">高</span>
+                        {% elif task.priority == '中' %}
+                            <span class="label-medium">中</span>
+                        {% elif task.priority == '低' %}
+                            <span class="label-low">低</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- 期限の表示 -->
+                    <div class="col-12 col-md-3 text-md-center text-muted mt-2 mt-md-0">
+                        {% if task.deadline %}
+                            期限: {{ task.deadline }}
+                        {% endif %}
+                    </div>
+
+                    <!-- 削除ボタン -->
+                    <div class="col-12 col-md-3 text-md-end mt-2 mt-md-0">
+                        <a href="#" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" onclick="setDeleteUrl('/delete/{{ task.id }}')">
+                            <i class="fas fa-trash-alt"></i> 削除
+                        </a>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+
+<!-- 並び替えフォーム -->
+<div class="container mt-4">
+    <form action="/" method="GET" class="row g-3">
+        <div class="col-md-4">
+            <select name="sort_by" class="form-select">
+                <option value="priority_high" {% if sort_by == 'priority_high' %}selected{% endif %}>優先度が高い順</option>
+                <option value="priority_low" {% if sort_by == 'priority_low' %}selected{% endif %}>優先度が低い順</option>
+                <option value="date_new" {% if sort_by == 'date_new' %}selected{% endif %}>日付が新しい順</option>
+                <option value="date_old" {% if sort_by == 'date_old' %}selected{% endif %}>日付が古い順</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary">並び替え</button>
+        </div>
+    </form>
+</div>
+
+<!-- フィルタリングフォーム -->
+<div class="container mt-4">
+    <form action="/" method="GET" class="row g-3">
+        <div class="col-md-4">
+            <select name="filter_by" class="form-select">
+                <option value="all" {% if filter_by == 'all' %}selected{% endif %}>すべてのタスク</option>
+                <option value="high_priority" {% if filter_by == 'high_priority' %}selected{% endif %}>優先度が高いタスク</option>
+                <option value="low_priority" {% if filter_by == 'low_priority' %}selected{% endif %}>優先度が低いタスク</option>
+                <option value="complete" {% if filter_by == 'complete' %}selected{% endif %}>完了したタスク</option>
+                <option value="incomplete" {% if filter_by == 'incomplete' %}selected{% endif %}>未完了のタスク</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary">フィルタリング</button>
+        </div>
+    </form>
+</div>
+
+
+
+<!-- 削除確認用のモーダル -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">タスク削除の確認</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          本当にこのタスクを削除しますか？
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+          <a href="#" id="confirmDeleteBtn" class="btn btn-danger">削除する</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
